@@ -388,8 +388,8 @@ export function PortfolioWithProjectImages() {
               <CardHeader>
                 <CardTitle className="text-2xl">Contact Me</CardTitle>
                 <CardDescription>
-                  I'd love to hear from you! Send me a message and I'll get back
-                  to you as soon as possible.
+                  I&apos;d love to hear from you! Send me a message and
+                  I&apos;ll get back to you as soon as possible.
                 </CardDescription>
               </CardHeader>
               <CardContent>
