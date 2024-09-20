@@ -10,8 +10,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, useScroll, useTransform } from "framer-motion";
 import {
+  motion,
+  useAnimation,
+  useInView,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import {
+  ChevronRight,
   Code,
   Download,
   Github,
@@ -23,7 +30,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FaEnvelope,
   FaGithub,
@@ -32,12 +39,46 @@ import {
 } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
-export function PortfolioWithProjectImages() {
+export function Portfolio() {
   const [activeSection, setActiveSection] = useState("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.9]);
+
+  const skillsRef = useRef(null);
+  const projectsRef = useRef(null);
+  const contactRef = useRef(null);
+
+  const skillsControls = useAnimation();
+  const isSkillsInView = useInView(skillsRef, { once: true, amount: 0.2 });
+  const projectsControls = useAnimation();
+  const isProjectsInView = useInView(projectsRef, { once: true, amount: 0.2 });
+  const contactControls = useAnimation();
+
+  const projectVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+      },
+    }),
+  };
+
+  const skillVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: (i: number) => ({
+      opacity: 1,
+      scale: 1,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.3,
+      },
+    }),
+  };
 
   const skills = [
     {
@@ -128,6 +169,31 @@ export function PortfolioWithProjectImages() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (entry.target.id === "skills") {
+              skillsControls.start({ opacity: 1, y: 0 });
+            } else if (entry.target.id === "projects") {
+              projectsControls.start({ opacity: 1, y: 0 });
+            } else if (entry.target.id === "contact") {
+              contactControls.start({ opacity: 1, y: 0 });
+            }
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    if (skillsRef.current) observer.observe(skillsRef.current);
+    if (projectsRef.current) observer.observe(projectsRef.current);
+    if (contactRef.current) observer.observe(contactRef.current);
+
+    return () => observer.disconnect();
+  }, [skillsControls, projectsControls, contactControls]);
+
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   const NavItems = () => (
@@ -136,7 +202,11 @@ export function PortfolioWithProjectImages() {
         <li key={item}>
           <Button
             variant="ghost"
-            className={`${activeSection === item.toLowerCase() ? "bg-neutral-900 text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900" : ""} w-full justify-start`}
+            className={`${
+              activeSection === item.toLowerCase()
+                ? "bg-neutral-700 text-neutral-50"
+                : ""
+            } w-full justify-start`}
             onClick={() => {
               const sectionId = item.toLowerCase();
               const section = document.getElementById(sectionId);
@@ -155,13 +225,13 @@ export function PortfolioWithProjectImages() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-neutral-950 dark:bg-neutral-950 dark:text-neutral-50">
-      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-2 dark:bg-neutral-950/80">
+    <div className="min-h-screen bg-neutral-900 text-neutral-50">
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-neutral-900/80 border-b-2 border-neutral-800">
         <div className="container mx-auto px-4 py-4">
           <nav className="flex justify-between items-center">
             <Link
               href="/"
-              className="text-2xl font-bold text-neutral-900 dark:text-neutral-50"
+              className="text-xl md:text-2xl font-bold text-black bg-white px-2 py-1.5 md:py-1.5 md:px-2 rounded-full"
             >
               HP
             </Link>
@@ -187,7 +257,7 @@ export function PortfolioWithProjectImages() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: "100%" }}
           transition={{ type: "spring", damping: 20, stiffness: 100 }}
-          className="fixed inset-y-0 right-0 z-20 w-64 bg-white shadow-lg dark:bg-neutral-950"
+          className="fixed inset-y-0 right-0 z-20 w-64 bg-neutral-800 shadow-lg"
         >
           <div className="p-4">
             <Button variant="ghost" className="mb-4" onClick={toggleMobileMenu}>
@@ -200,7 +270,7 @@ export function PortfolioWithProjectImages() {
         </motion.div>
       )}
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6">
         <motion.section
           id="home"
           className="min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center text-center py-20"
@@ -217,7 +287,7 @@ export function PortfolioWithProjectImages() {
                 Harshal Patil
               </motion.h1>
               <motion.h2
-                className="text-3xl md:text-4xl font-semibold mb-4 text-neutral-900 dark:text-neutral-50"
+                className="text-3xl md:text-4xl font-semibold mb-4 text-neutral-300"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
@@ -225,7 +295,7 @@ export function PortfolioWithProjectImages() {
                 Web Developer
               </motion.h2>
               <motion.p
-                className="text-xl mb-8 max-w-2xl mx-auto"
+                className="text-xl mb-8 max-w-2xl mx-auto text-neutral-400"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
@@ -240,7 +310,7 @@ export function PortfolioWithProjectImages() {
                 transition={{ delay: 0.6, duration: 0.5 }}
               >
                 <Button
-                  className="cursor-pointer"
+                  className="cursor-pointer bg-neutral-800 hover:bg-neutral-700"
                   asChild
                   size="lg"
                   onClick={() => {
@@ -250,16 +320,19 @@ export function PortfolioWithProjectImages() {
                     }
                   }}
                 >
-                  <span>View my work</span>
+                  <div>
+                    <span>View my work</span>
+                    <ChevronRight />
+                  </div>
                 </Button>
 
                 <Button asChild size="lg" variant="outline">
                   <Link
                     target="_blank"
                     href="https://drive.google.com/file/d/1rfiIMfIemDJiWI25OiBxX15_WdM_m--S/view?usp=sharing"
-                    download
                   >
-                    <Download className="mr-2 h-4 w-4" /> Download CV
+                    <span>Download CV</span>{" "}
+                    <Download className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
               </motion.div>
@@ -270,47 +343,47 @@ export function PortfolioWithProjectImages() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.8, duration: 0.5 }}
             >
-              <div className="flex items-center justify-center bg-neutral-900/10 rounded-lg p-6 dark:bg-neutral-50/10">
-                <Code
-                  size={64}
-                  className="text-neutral-900 dark:text-neutral-50"
-                />
+              <div className="flex items-center justify-center bg-neutral-800 rounded-lg p-6">
+                <Code size={64} className="text-neutral-300" />
               </div>
-              <div className="flex items-center justify-center bg-neutral-900/10 rounded-lg p-6 dark:bg-neutral-50/10">
-                <Laptop
-                  size={64}
-                  className="text-neutral-900 dark:text-neutral-50"
-                />
+              <div className="flex items-center justify-center bg-neutral-800 rounded-lg p-6">
+                <Laptop size={64} className="text-neutral-300" />
               </div>
-              <div className="flex items-center justify-center bg-neutral-900/10 rounded-lg p-6 dark:bg-neutral-50/10">
-                <MonitorSmartphone
-                  size={64}
-                  className="text-neutral-900 dark:text-neutral-50"
-                />
+              <div className="flex items-center justify-center bg-neutral-800 rounded-lg p-6">
+                <MonitorSmartphone size={64} className="text-neutral-300" />
               </div>
-              <div className="flex items-center justify-center bg-neutral-900/10 rounded-lg p-6 dark:bg-neutral-50/10">
-                <Github
-                  size={64}
-                  className="text-neutral-900 dark:text-neutral-50"
-                />
+              <div className="flex items-center justify-center bg-neutral-800 rounded-lg p-6">
+                <Github size={64} className="text-neutral-300" />
               </div>
             </motion.div>
           </div>
         </motion.section>
 
-        <section id="skills" className="py-20">
-          <h2 className="text-3xl font-bold mb-8">Skills</h2>
+        <motion.section
+          id="skills"
+          className="py-20"
+          ref={skillsRef}
+          initial="hidden"
+          animate={isSkillsInView ? "visible" : "hidden"}
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+        >
+          <h2 className="text-3xl font-bold mb-8 text-neutral-100">Skills</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {skills.map((skill, index) => (
               <motion.div
                 key={skill.name}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
+                variants={skillVariants}
+                custom={index}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Card className="overflow-hidden">
+                <Card className="overflow-hidden bg-neutral-800 border-neutral-700">
                   <CardContent className="flex flex-col items-center justify-center h-40 p-6">
                     <Image
                       src={skill.icon}
@@ -319,7 +392,7 @@ export function PortfolioWithProjectImages() {
                       height={64}
                       className="mb-4"
                     />
-                    <p className="text-lg font-medium text-center">
+                    <p className="text-lg font-medium text-center text-neutral-300">
                       {skill.name}
                     </p>
                   </CardContent>
@@ -327,19 +400,31 @@ export function PortfolioWithProjectImages() {
               </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section id="projects" className="py-20">
-          <h2 className="text-3xl font-bold mb-8">Projects</h2>
+        <motion.section
+          id="projects"
+          className="py-20"
+          ref={projectsRef}
+          initial="hidden"
+          animate={isProjectsInView ? "visible" : "hidden"}
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.1,
+              },
+            },
+          }}
+        >
+          <h2 className="text-3xl font-bold mb-8 text-neutral-100">Projects</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project, index) => (
               <motion.div
                 key={project.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2, duration: 0.5 }}
+                variants={projectVariants}
+                custom={index}
               >
-                <Card className="overflow-hidden">
+                <Card className="overflow-hidden bg-neutral-800 border-neutral-700">
                   <Image
                     src={project.image}
                     alt={project.title}
@@ -348,10 +433,14 @@ export function PortfolioWithProjectImages() {
                     className="w-full h-48 object-cover transition-transform duration-300 ease-in-out transform hover:scale-110"
                   />
                   <CardHeader>
-                    <CardTitle>{project.title}</CardTitle>
+                    <CardTitle className="text-neutral-100">
+                      {project.title}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription>{project.description}</CardDescription>
+                    <CardDescription className="text-neutral-400">
+                      {project.description}
+                    </CardDescription>
                   </CardContent>
                   <CardFooter className="flex justify-between">
                     <Button asChild variant="default" size="sm">
@@ -364,7 +453,7 @@ export function PortfolioWithProjectImages() {
                         <Link2 /> <span>Demo</span>{" "}
                       </Link>
                     </Button>
-                    <Button asChild variant="primary" size="sm">
+                    <Button asChild variant="secondary" size="sm">
                       <Link
                         href={project.codeLink}
                         className="flex items-center space-x-2"
@@ -379,15 +468,26 @@ export function PortfolioWithProjectImages() {
               </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
-        <section id="contact" className="py-20">
-          <h2 className="text-3xl font-bold mb-8">Get in Touch</h2>
+        <motion.section
+          id="contact"
+          className="py-20"
+          ref={contactRef}
+          initial={{ opacity: 0, y: 50 }}
+          animate={contactControls}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-3xl font-bold mb-8 text-neutral-100">
+            Get in Touch
+          </h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+            <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 border-neutral-700">
               <CardHeader>
-                <CardTitle className="text-2xl">Contact Me</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-2xl text-neutral-100">
+                  Contact Me
+                </CardTitle>
+                <CardDescription className="text-neutral-400">
                   I&apos;d love to hear from you! Send me a message and
                   I&apos;ll get back to you as soon as possible.
                 </CardDescription>
@@ -397,16 +497,20 @@ export function PortfolioWithProjectImages() {
                   <div>
                     <label
                       htmlFor="name"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-neutral-300"
                     >
                       Name
                     </label>
-                    <Input id="name" placeholder="Your name" className="mt-1" />
+                    <Input
+                      id="name"
+                      placeholder="Your name"
+                      className="mt-1 bg-neutral-700 text-neutral-100 border-neutral-600"
+                    />
                   </div>
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-neutral-300"
                     >
                       Email
                     </label>
@@ -414,13 +518,13 @@ export function PortfolioWithProjectImages() {
                       id="email"
                       type="email"
                       placeholder="Your email"
-                      className="mt-1"
+                      className="mt-1 bg-neutral-700 text-neutral-100 border-neutral-600"
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="message"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-neutral-300"
                     >
                       Message
                     </label>
@@ -428,20 +532,27 @@ export function PortfolioWithProjectImages() {
                       id="message"
                       placeholder="Your message"
                       rows={4}
-                      className="mt-1"
+                      className="mt-1 bg-neutral-700 text-neutral-100 border-neutral-600"
                     />
                   </div>
-                  <Button type="submit" className="w-full">
+                  <Button
+                    type="submit"
+                    className="w-full bg-neutral-800 hover:bg-neutral-700"
+                  >
                     Send Message
                   </Button>
                 </form>
               </CardContent>
             </Card>
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5">
+              <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 border-neutral-700">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Connect with Me</CardTitle>
-                  <CardDescription>Find me on these platforms</CardDescription>
+                  <CardTitle className="text-2xl text-neutral-100">
+                    Connect with Me
+                  </CardTitle>
+                  <CardDescription className="text-neutral-400">
+                    Find me on these platforms
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-center space-x-4">
@@ -449,7 +560,7 @@ export function PortfolioWithProjectImages() {
                       href="https://github.com/Harshal-3558"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-600 hover:text-primary transition-colors"
+                      className="text-neutral-400 hover:text-neutral-100 transition-colors"
                     >
                       <FaGithub size={32} />
                       <span className="sr-only">GitHub</span>
@@ -458,7 +569,7 @@ export function PortfolioWithProjectImages() {
                       href="https://www.linkedin.com/in/harshal-patil-b901b6249"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-600 hover:text-primary transition-colors"
+                      className="text-neutral-400 hover:text-neutral-100 transition-colors"
                     >
                       <FaLinkedinIn size={32} />
                       <span className="sr-only">LinkedIn</span>
@@ -467,21 +578,21 @@ export function PortfolioWithProjectImages() {
                       href="https://x.com/Harshal_790"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-600 hover:text-primary transition-colors"
+                      className="text-neutral-400 hover:text-neutral-100 transition-colors"
                     >
                       <FaXTwitter size={32} />
                       <span className="sr-only">Twitter</span>
                     </Link>
                     <Link
                       href="https://www.instagram.com/patilharshal3558"
-                      className="text-gray-600 hover:text-primary transition-colors"
+                      className="text-neutral-400 hover:text-neutral-100 transition-colors"
                     >
                       <FaInstagram size={32} />
-                      <span className="sr-only">Email</span>
+                      <span className="sr-only">Instagram</span>
                     </Link>
                     <Link
                       href="mailto:patilharshal3558@gmail.com"
-                      className="text-gray-600 hover:text-primary transition-colors"
+                      className="text-neutral-400 hover:text-neutral-100 transition-colors"
                     >
                       <FaEnvelope size={32} />
                       <span className="sr-only">Email</span>
@@ -489,10 +600,12 @@ export function PortfolioWithProjectImages() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-accent/10 to-accent/5">
+              <Card className="bg-gradient-to-br from-neutral-800 to-neutral-900 border-neutral-700">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Location</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-2xl text-neutral-100">
+                    Location
+                  </CardTitle>
+                  <CardDescription className="text-neutral-400">
                     Based in Panvel, Maharashtra
                   </CardDescription>
                 </CardHeader>
@@ -504,7 +617,7 @@ export function PortfolioWithProjectImages() {
                       height="250"
                       style={{ border: 0 }}
                       loading="lazy"
-                      className="rounded-l-lg"
+                      className="rounded-lg"
                       title="Google Maps Location"
                     ></iframe>
                   </div>
@@ -512,11 +625,11 @@ export function PortfolioWithProjectImages() {
               </Card>
             </div>
           </div>
-        </section>
+        </motion.section>
       </main>
 
-      <footer className="bg-neutral-100 py-6 dark:bg-neutral-800">
-        <div className="container mx-auto px-4 text-center">
+      <footer className="bg-neutral-800 py-6">
+        <div className="container mx-auto px-4 text-center text-neutral-400">
           <p>
             &copy; {new Date().getFullYear()} Harshal Patil. All rights
             reserved.

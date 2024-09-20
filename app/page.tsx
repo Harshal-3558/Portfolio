@@ -1,5 +1,5 @@
-import { PortfolioWithProjectImages } from "@/components/portfolio-with-project-images"
+import { Portfolio } from "@/components/portfolio"
 
 export default function Page() {
-  return <PortfolioWithProjectImages />
+  return <Portfolio/>
 }
